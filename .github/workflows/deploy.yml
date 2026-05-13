@@ -1,0 +1,37 @@
+name: Terraform Deploy
+
+on:
+    push:
+        branches:
+        - main
+
+permissions:
+    id-token: write
+    contents: read
+
+defaults:
+  run:
+    working-directory: terraform
+
+jobs:
+    terraform:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                role-to-assume: arn:aws:iam::123456789012:role/github-actions-role
+                aws-region: sa-east-1
+
+            - name: Install Terraform
+              uses: hashicorp/setup-terraform@v3
+              
+            - name: Terraform Init
+              run: terraform init
+
+            - name: Terraform apply
+              run: terraform apply -auto-approve
