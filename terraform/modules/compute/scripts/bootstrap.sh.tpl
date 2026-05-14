@@ -1,21 +1,24 @@
 #!/bin/bash
+set -euo pipefail
+
+# --- Pacotes base ---
 apt-get update -y
 apt-get install -y curl git nginx
 
-# installing cloudflared to setup Tunnel
-sudo mkdir -p --mode=0755 /usr/share/keyrings
-curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+# --- Instalação do cloudflared ---
+mkdir -p --mode=0755 /usr/share/keyrings
+curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg \
+  | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
 
-# cloudflare repo
-echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared noble main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared noble main' \
+  | tee /etc/apt/sources.list.d/cloudflared.list
 
-# installing cloudflare
-sudo apt-get update && sudo apt-get install cloudflared
+apt-get update -y
+apt-get install -y cloudflared
 
+# --- Configuração do Cloudflare Tunnel ---
 cloudflared service install ${tunnel_token}
 
-systemctl enable cloudflared
-systemctl start cloudflared
-
-systemctl enable nginx
-systemctl start nginx
+# --- Habilitar e iniciar serviços ---
+systemctl enable --now cloudflared
+systemctl enable --now nginx
