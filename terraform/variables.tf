@@ -1,18 +1,29 @@
 variable "project_name" {
-    default = "portfolio"
+  description = "Nome do projeto, usado como prefixo em todos os recursos"
+  type        = string
+  default     = "portfolio"
 }
 
 variable "domain_name" {
-  description = "Domain name for the Cloudflare DNS record"
+  description = "Domínio gerenciado pelo Cloudflare"
+  type        = string
   default     = "maschior.com"
 }
 
+variable "aws_region" {
+  description = "Região AWS para provisionamento dos recursos"
+  type        = string
+  default     = "sa-east-1"
+}
+
 variable "portfolio_instance_type" {
-  description = "Instance type for the portfolio EC2 instance"
+  description = "Tipo de instância EC2 para o portfolio"
+  type        = string
   default     = "t3.micro"
 }
 
-variable "portfolio_elastic_ip" {
-    description = "Public Elastic IP address for the portfolio EC2 instance"
-    default     = ""
+variable "cloudflare_account_id" {
+  description = "ID da conta Cloudflare"
+  type        = string
+  sensitive   = true
 }

@@ -1,37 +1,45 @@
 name: Terraform Deploy
 
 on:
-    push:
-        branches:
-        - main
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
 
 permissions:
-    id-token: write
-    contents: read
+  id-token: write
+  contents: read
 
 defaults:
   run:
     working-directory: terraform
 
+env:
+  TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
 jobs:
-    terraform:
-        runs-on: ubuntu-latest
+  terraform:
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Configure AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v4
-              with:
-                role-to-assume: arn:aws:iam::123456789012:role/github-actions-role
-                aws-region: sa-east-1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: sa-east-1
 
-            - name: Install Terraform
-              uses: hashicorp/setup-terraform@v3
-              
-            - name: Terraform Init
-              run: terraform init
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
 
-            - name: Terraform apply
-              run: terraform apply -auto-approve
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply tfplan
