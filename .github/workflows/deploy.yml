@@ -17,6 +17,7 @@ defaults:
 
 env:
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
 jobs:
   terraform:
@@ -34,12 +35,57 @@ jobs:
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
 
       - name: Terraform Init
         run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
 
       - name: Terraform Apply
         run: terraform apply tfplan
+
+      - name: Post-Deploy Health Check
+        run: |
+          PUBLIC_IP=$(terraform output -raw public_ip)
+          echo "Public IP is: $PUBLIC_IP"
+          echo "Waiting for web server to be up and serving..."
+          
+          max_attempts=30
+          attempt=1
+          success=false
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt of $max_attempts..."
+            status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 "http://$PUBLIC_IP/" || echo "000")
+            
+            if [ "$status_code" -eq 200 ]; then
+              echo "Web server is online! HTTP Status 200"
+              content=$(curl -s "http://$PUBLIC_IP/")
+              if echo "$content" | grep -q "Portfolio Maschior"; then
+                echo "Health check verification passed!"
+                success=true
+                break
+              else
+                echo "WARNING: Web server is serving, but placeholder content was not found."
+              fi
+            else
+              echo "Web server not ready yet (HTTP Status $status_code). Retrying in 10s..."
+            fi
+            
+            attempt=$((attempt+1))
+            sleep 10
+          done
+          
+          if [ "$success" = false ]; then
+            echo "ERROR: Health check failed. Web server did not respond correctly within 5 minutes."
+            exit 1
+          fi
