@@ -12,3 +12,8 @@ output "domain" {
   description = "Domínio do portfolio"
   value       = var.domain_name
 }
+
+output "public_ip" {
+  description = "IP público da instância EC2"
+  value       = module.compute.public_ip
+}

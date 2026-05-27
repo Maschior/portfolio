@@ -1,3 +1,10 @@
+# --- Bootstrap para Estado Remoto (S3 + DynamoDB) ---
+module "bootstrap" {
+  source      = "./modules/bootstrap"
+  aws_region  = var.aws_region
+  domain_name = var.domain_name
+}
+
 # --- GitHub OIDC Provider para autenticação de GitHub Actions com AWS ---
 module "github_oidc" {
   source = "./modules/github_oidc"
