@@ -36,7 +36,8 @@ resource "aws_instance" "this" {
   user_data_replace_on_change = true
 
   tags = {
-    Name = "${var.project_name}-instance"
-    Env  = var.environment
+    Name    = "${var.project_name}-instance"
+    Env     = var.environment
+    project = "portfolio"
   }
 }
