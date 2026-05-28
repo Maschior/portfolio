@@ -3,7 +3,7 @@ set -euo pipefail
 
 # --- Pacotes base ---
 apt-get update -y
-apt-get install -y curl git nginx ansible
+apt-get install -y curl git nginx ansible awscli
 
 # --- Instalação do cloudflared ---
 mkdir -p --mode=0755 /usr/share/keyrings
