@@ -26,6 +26,7 @@ module "iam_role" {
   source = "./modules/iam"
 
   project_name = var.project_name
+  domain_name  = var.domain_name
 }
 
 # --- Security Group ---
