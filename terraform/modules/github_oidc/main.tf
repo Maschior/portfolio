@@ -39,6 +39,10 @@ resource "aws_iam_role" "github_actions" {
       }
     }]
   })
+
+  tags = {
+    project = "portfolio"
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "terraform_admin" {

@@ -30,6 +30,7 @@ resource "aws_security_group" "this" {
   }
 
   tags = {
-    Name = "${var.project_name}-sg"
+    Name    = "${var.project_name}-sg"
+    project = "portfolio"
   }
 }
