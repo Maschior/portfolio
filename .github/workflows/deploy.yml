@@ -53,11 +53,6 @@ jobs:
       - name: Terraform Apply
         run: terraform apply tfplan
 
-      - name: Wait for infrastructure to be ready
-        run: |
-          echo "Waiting for infrastructure to be ready..."
-          sleep 150
-
       - name: Post-Deploy Health Check
         run: |
           PUBLIC_IP=$(terraform output -raw public_ip)
