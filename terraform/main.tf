@@ -45,7 +45,7 @@ module "cloudflare" {
   cloudflare_account_id = var.cloudflare_account_id
 }
 
-# --- EC2 Instance ---
+# --- EC2 Instance ----
 module "compute" {
   source = "./modules/compute"
 
