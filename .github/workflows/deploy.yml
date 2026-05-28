@@ -53,30 +53,49 @@ jobs:
       - name: Terraform Apply
         run: terraform apply tfplan
 
-      - name: Frontend deployment trigger
-        if: success()
+      - name: Wait for infrastructure to be ready
         run: |
-          echo "Triggering frontend deployment..."
-          curl -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.TRIGGER_FRONTEND_PAT }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/Maschior/portfolio-webapp/actions/workflows/deploy.yml/dispatches \
-            -d '{"ref":"main"}'
+          echo "Waiting for infrastructure to be ready..."
+          sleep 150
 
       - name: Post-Deploy Health Check
         run: |
           PUBLIC_IP=$(terraform output -raw public_ip)
           echo "Public IP is: $PUBLIC_IP"
-          echo "Waiting for web server to be up and serving..."
           
-          max_attempts=30
+          # --- 1. Aguarda o Agente do SSM ficar Online na AWS ---
+          echo "Waiting for SSM Agent to be Online..."
+          ssm_success=false
           attempt=1
-          success=false
+          while [ $attempt -le 30 ]; do
+            echo "Checking SSM PingStatus (Attempt $attempt of 30)..."
+            INSTANCE_ID=$(aws ssm describe-instance-information \
+              --filters "Key=tag:Name,Values=portfolio-instance" \
+              --query "InstanceInformationList[?PingStatus=='Online'].InstanceId" \
+              --output text --region sa-east-1)
+            
+            if [ -n "$INSTANCE_ID" ]; then
+              echo "SSM Agent is Online! Instance ID: $INSTANCE_ID"
+              ssm_success=true
+              break
+            else
+              echo "SSM Agent not online yet. Retrying in 10s..."
+            fi
+            attempt=$((attempt+1))
+            sleep 10
+          done
           
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt of $max_attempts..."
+          if [ "$ssm_success" = false ]; then
+            echo "ERROR: SSM Agent did not come online within 5 minutes."
+            exit 1
+          fi
+          
+          # --- 2. Aguarda o Nginx e o Ansible terminarem de configurar o site ---
+          echo "Waiting for web server to be up and serving..."
+          web_success=false
+          attempt=1
+          while [ $attempt -le 30 ]; do
+            echo "Attempt $attempt of 30..."
             status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 "http://$PUBLIC_IP/" || echo "000")
             
             if [ "$status_code" -eq 200 ]; then
@@ -84,7 +103,7 @@ jobs:
               content=$(curl -s "http://$PUBLIC_IP/")
               if echo "$content" | grep -q "Portfolio Maschior"; then
                 echo "Health check verification passed!"
-                success=true
+                web_success=true
                 break
               else
                 echo "WARNING: Web server is serving, but placeholder content was not found."
@@ -97,7 +116,20 @@ jobs:
             sleep 10
           done
           
-          if [ "$success" = false ]; then
+          if [ "$web_success" = false ]; then
             echo "ERROR: Health check failed. Web server did not respond correctly within 5 minutes."
             exit 1
           fi
+      
+      - name: Frontend deployment trigger
+        if: success()
+        run: |
+          echo "Triggering frontend deployment..."
+          curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.TRIGGER_FRONTEND_PAT }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/Maschior/portfolio-webapp/actions/workflows/deploy.yml/dispatches \
+            -d '{"ref":"main"}'
+
