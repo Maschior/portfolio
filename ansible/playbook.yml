@@ -16,13 +16,10 @@
           - npm
         state: present
 
-    - name: Install PM2 and PNPM globally
+    - name: Install PM2 globally
       npm:
-        name:  "{{ item }}"
+        name: pm2
         global: yes
-      loop:
-        - pm2
-        - pnpm
 
     - name: Create portfolio web directory
       file:
@@ -32,22 +29,21 @@
         group: www-data
         mode: '0755'
 
-    - name: Download latest version of webapp
-      git:
-        repo: 'https://github.com/Maschior/portfolio-webapp.git'
-        dest: /var/www/portfolio
-        version: main
-        force: yes
-
-    - name: Install project deps
-      command: pnpm install --production
-      args:
-        chdir: /var/www/portfolio
-
-    - name: Execute build
-      command: pnpm build
-      args:
-        chdir: /var/www/portfolio
+    - name: Create a lightweight node server placeholder
+      copy:
+        dest: /var/www/portfolio/server.js
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        content: |
+          const http = require('http');
+          const server = http.createServer((req, res) => {
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end('<h1>Portfolio Maschior</h1><p>Pronto para implantação da aplicação Next.js.</p>');
+          });
+          server.listen(3000, '127.0.0.1', () => {
+            console.log('Placeholder running on port 3000');
+          });
 
     - name: Check if application is already running on PM2
       command: pm2 describe portfolio
@@ -55,96 +51,22 @@
       ignore_errors: yes
       changed_when: false
 
-    - name: Start application on PM2 (if it's not running)
-      command: pm2 start pnpm --name "portfolio" -- start
+    - name: Start placeholder application on PM2
+      command: pm2 start server.js --name "portfolio"
       args:
         chdir: /var/www/portfolio
       when: pm2_check.rc != 0
 
-    - name: Reload application on PM2 (if it's already running on PM2)
-      command: pm2 reload portfolio
-      args:
-        chdir: /var/www/portfolio
-      when: pm2_check.rc == 0
-
-    - name: Save PM process list to start on boot
-      command: pm2 save
-      changed_when: yes
-      
-    # - name: Create a beautiful placeholder portfolio page
-    #   copy:
-    #     dest: /var/www/portfolio/index.html
-    #     owner: www-data
-    #     group: www-data
-    #     mode: '0644'
-    #     content: |
-    #       <!DOCTYPE html>
-    #       <html lang="pt-BR">
-    #       <head>
-    #           <meta charset="UTF-8">
-    #           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    #           <title>Portfolio - Em Construção</title>
-    #           <style>
-    #               body {
-    #                   font-family: 'Outfit', 'Inter', sans-serif;
-    #                   background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-    #                   color: #f8fafc;
-    #                   height: 100vh;
-    #                   margin: 0;
-    #                   display: flex;
-    #                   align-items: center;
-    #                   justify-content: center;
-    #                   text-align: center;
-    #               }
-    #               .container {
-    #                   background: rgba(255, 255, 255, 0.05);
-    #                   backdrop-filter: blur(10px);
-    #                   padding: 3rem;
-    #                   border-radius: 16px;
-    #                   border: 1px solid rgba(255, 255, 255, 0.1);
-    #                   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    #                   max-width: 500px;
-    #               }
-    #               h1 {
-    #                   font-size: 2.5rem;
-    #                   margin-bottom: 1rem;
-    #                   background: linear-gradient(to right, #38bdf8, #818cf8);
-    #                   -webkit-background-clip: text;
-    #                   -webkit-text-fill-color: transparent;
-    #               }
-    #               p {
-    #                   font-size: 1.1rem;
-    #                   color: #94a3b8;
-    #                   line-height: 1.6;
-    #               }
-    #               .status {
-    #                   display: inline-block;
-    #                   margin-top: 1.5rem;
-    #                   padding: 0.5rem 1rem;
-    #                   background: rgba(56, 189, 248, 0.15);
-    #                   color: #38bdf8;
-    #                   border-radius: 9999px;
-    #                   font-weight: 600;
-    #                   font-size: 0.9rem;
-    #                   border: 1px solid rgba(56, 189, 248, 0.3);
-    #               }
-    #           </style>
-    #       </head>
-    #       <body>
-    #           <div class="container">
-    #               <h1>Portfolio Maschior</h1>
-    #               <p>A infraestrutura AWS foi provisionada com sucesso via Terraform, integrada ao Cloudflare Tunnel e automatizada com GitHub Actions & Ansible.</p>
-    #               <div class="status">Status: Pronto para implantação da aplicação</div>
-    #           </div>
-    #       </body>
-    #       </html>
-
-    - name: Configurar o PM2 para iniciar no boot do sistema
+    - name: Configure PM2 to start on boot
       command: env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root
       register: pm2_startup_output
       changed_when: "'setup' in pm2_startup_output.stdout"
 
-    - name: Configure Nginx default site block
+    - name: Save PM2 process list
+      command: pm2 save
+      changed_when: yes
+
+    - name: Configure Nginx as a reverse proxy
       copy:
         dest: /etc/nginx/sites-available/default
         owner: root
