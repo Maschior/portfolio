@@ -3,7 +3,13 @@ set -euo pipefail
 
 # --- Pacotes base ---
 apt-get update -y
-apt-get install -y curl git nginx ansible awscli
+apt-get install -y curl git nginx ansible unzip
+
+# --- Instalação do AWS CLI v2 ---
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+rm -rf /tmp/awscliv2.zip /tmp/aws
 
 # --- Instalação do cloudflared ---
 mkdir -p --mode=0755 /usr/share/keyrings
