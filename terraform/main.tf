@@ -62,3 +62,11 @@ module "compute" {
   project_name = var.project_name
   environment  = "dev"
 }
+
+module "aws_myapplication" {
+  source = "./modules/aws_myapplication"
+
+  project_name = var.project_name
+
+  depends_on = [module.network_dev, module.iam_role, module.security_group, module.compute, module.bootstrap, module.github_oidc]
+}
