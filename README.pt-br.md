@@ -12,6 +12,7 @@ Este repositório gerencia a infraestrutura na nuvem e a configuração de siste
 
 A infraestrutura simula um ambiente de nuvem corporativo com repositórios e pipelines separados:
 - **IaC com Terraform:** Provisiona rede, computação e segurança na AWS. Ele utiliza uma estratégia de **Tagging Global (default_tags)** no nível do provedor para garantir que todos os recursos sejam etiquetados de forma consistente.
+- **Integração AWS myApplications:** Agrupa todos os recursos sob um painel unificado no console da AWS via AWS Service Catalog AppRegistry. A tag única da aplicação é mesclada dinamicamente no `default_tags` do provedor. Para evitar um ciclo de dependência circular no Terraform, o recurso do AppRegistry é provisionado usando um provedor AWS alternativo (`aws.no_tags`) que não injeta essas tags globais.
 - **Automação com Ansible:** Execução local de configurações. Os playbooks do Ansible são injetados dinamicamente no processo de inicialização da EC2 via Cloud-Init/User Data, instalando e configurando automaticamente serviços essenciais (Nginx, Node.js, PM2) sem intervenção manual externa.
 - **Túnel Seguro da Cloudflare:** Desacoplado do ciclo de vida da instância de computação para evitar conflitos de DNS. Um túnel estático é criado uma única vez na Cloudflare, e a instância EC2 se associa com segurança a ele usando o token do túnel na inicialização.
 - **Integração com GitHub Actions:** Utiliza autenticação segura via OpenID Connect (OIDC) da AWS para deploys IAM sem o uso de senhas ou chaves estáticas.

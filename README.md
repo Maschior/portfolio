@@ -12,6 +12,7 @@ This repository manages the Cloud Infrastructure and System Configuration for ho
 
 The infrastructure simulates a corporate cloud environment with separate repository codebases and automated pipelines:
 - **Terraform IaC:** Provisions AWS networking, computing, and security. It uses a **Global Tagging (default_tags)** strategy at the provider level to ensure all resources are labeled consistently.
+- **AWS myApplications Integration:** Registers resources under a unified dashboard in the AWS Console using AWS Service Catalog AppRegistry. It dynamically merges the application's unique tracking tag into the provider's `default_tags`. To prevent Terraform's circular dependency cycle, an aliased AWS provider (`aws.no_tags`) without default tags is used specifically to provision the AppRegistry resource.
 - **Ansible Automation:** Localized configuration execution. Ansible playbooks are dynamically injected into the EC2 launch instance via Cloud-Init/User Data. It automatically installs and configures system services (Nginx, Node.js, PM2) and prepares the host.
 - **Secure Cloudflare Tunnel:** Decoupled from the lifecycle of the compute instance to prevent DNS collisions. A static tunnel is created once in Cloudflare, and the EC2 instance securely registers with it using a secret tunnel token on boot.
 - **GitHub Actions Integration:** Utilizes secure AWS OpenID Connect (OIDC) authentication for passwordless IAM deployments.
