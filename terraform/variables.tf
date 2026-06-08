@@ -27,3 +27,9 @@ variable "cloudflare_account_id" {
   type        = string
   sensitive   = true
 }
+
+variable "cloudflare_tunnel_token" {
+  type        = string
+  description = "Token para autenticação do túnel Cloudflare"
+  sensitive = true
+}

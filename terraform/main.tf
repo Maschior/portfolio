@@ -38,13 +38,15 @@ module "security_group" {
 }
 
 # --- Cloudflare DNS + Tunnel ---
-module "cloudflare" {
-  source = "./modules/cloudflare"
+# module "cloudflare" {
+#   source = "./modules/cloudflare"
 
-  domain_name           = var.domain_name
-  project_name          = var.project_name
-  cloudflare_account_id = var.cloudflare_account_id
-}
+#   domain_name           = var.domain_name
+#   project_name          = var.project_name
+#   cloudflare_account_id = var.cloudflare_account_id
+# }
+
+
 
 # --- EC2 Instance -----
 module "compute" {
@@ -55,7 +57,7 @@ module "compute" {
   security_group_id    = module.security_group.security_group_id
   iam_instance_profile = module.iam_role.ec2_profile_name
   aws_region           = var.aws_region
-  tunnel_token         = module.cloudflare.tunnel_token
+  tunnel_token         = var.cloudflare_tunnel_token
 
   project_name = var.project_name
   environment  = "dev"
