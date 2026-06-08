@@ -11,9 +11,9 @@ This repository manages the Cloud Infrastructure and System Configuration for ho
 ## Architecture Overview
 
 The infrastructure simulates a corporate cloud environment with separate repository codebases and automated pipelines:
-- **Terraform IaC:** Provisions AWS networking, computing, security, and integration with Cloudflare.
-- **Ansible Automation:** Installs and configures system services (like Nginx) and handles host configurations on the EC2 instance.
-- **Secure Cloudflare Tunnel:** Connects the EC2 instance to the public web via an outbound tunnel (no public inbound ports need to be exposed to the internet).
+- **Terraform IaC:** Provisions AWS networking, computing, and security. It uses a **Global Tagging (default_tags)** strategy at the provider level to ensure all resources are labeled consistently.
+- **Ansible Automation:** Localized configuration execution. Ansible playbooks are dynamically injected into the EC2 launch instance via Cloud-Init/User Data. It automatically installs and configures system services (Nginx, Node.js, PM2) and prepares the host.
+- **Secure Cloudflare Tunnel:** Decoupled from the lifecycle of the compute instance to prevent DNS collisions. A static tunnel is created once in Cloudflare, and the EC2 instance securely registers with it using a secret tunnel token on boot.
 - **GitHub Actions Integration:** Utilizes secure AWS OpenID Connect (OIDC) authentication for passwordless IAM deployments.
 
 ## Technology Stack
@@ -33,13 +33,14 @@ portfolio-infra/
 │   │   ├── network/          # VPC, Subnet, Route Table configurations
 │   │   ├── iam/              # IAM Policies & Roles for SSM
 │   │   ├── security/         # Security Groups
-│   │   ├── cloudflare/       # Cloudflare Tunnel & DNS record resources
-│   │   └── compute/          # EC2 instance & launch scripting
+│   │   └── compute/          # EC2 instance & launch scripting (injects Ansible files)
 │   ├── main.tf               # Root module orchestrator
+│   ├── providers.tf          # Provider configs & global default_tags
 │   └── variables.tf          # Input declarations
 └── ansible/                  # Ansible Provisioning configs
-    ├── playbooks.yml         # Server configuration tasks (Nginx setup, etc.)
-    └── hosts                 # Inventory definitions
+    ├── playbook.yml          # Server configuration tasks (Nginx, Node.js, PM2 setup)
+    ├── ansible.cfg           # Local Ansible configuration
+    └── hosts                 # Local inventory definitions
 ```
 
 ## Deployment Guide
@@ -49,34 +50,40 @@ Follow the instructions below to configure and provision the infrastructure:
 ### 1. Prerequisites
 Ensure you have the following installed:
 - [Terraform CLI](https://developer.hashicorp.com/terraform/downloads)
-- [Ansible CLI](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 - [AWS CLI](https://aws.amazon.com/cli/) configured with your credentials.
 
-### 2. Infrastructure Provisioning
+### 2. Cloudflare Manual Setup (One-time)
+Because the Cloudflare Tunnel is decoupled to prevent recreation/DNS failures:
+1. Create a Cloudflare Tunnel manually in the **Cloudflare Zero Trust** console.
+2. Route the traffic to your domain (e.g. `yourdomain.com` and `www.yourdomain.com`) to point to `http://localhost:80`.
+3. Set up CNAME records pointing to your tunnel (`<tunnel-id>.cfargotunnel.com`).
+4. Copy the **Tunnel Token**.
+
+### 3. Infrastructure Provisioning
 Navigate to the terraform directory:
 ```bash
 cd terraform
 ```
+
+Create a `terraform.tfvars` file or configure your environment variables:
+```hcl
+aws_region              = "sa-east-1"
+domain_name             = "yourdomain.com"
+project_name            = "portfolio"
+cloudflare_tunnel_token = "YOUR_CLOUDFLARE_TUNNEL_TOKEN"
+```
+*(When deploying via GitHub Actions, add `CLOUDFLARE_TUNNEL_TOKEN` as a secret and inject it as `TF_VAR_cloudflare_tunnel_token`).*
 
 Initialize Terraform (downloads providers and module requirements):
 ```bash
 terraform init
 ```
 
-Review planned changes:
+Review and deploy changes:
 ```bash
 terraform plan
-```
-
-Deploy infrastructure:
-```bash
 terraform apply
 ```
 
-### 3. Server Configuration (Ansible)
-After provisioning the EC2 instance, navigate to the ansible directory to configure it:
-```bash
-cd ../ansible
-ansible-playbook playbook.yml
-```
-This installs Nginx, configures directories, and prepares the host for the web application deployment.
+### 4. Server Configuration
+No manual execution of Ansible is needed! The EC2 instance automatically installs and runs the local Ansible playbooks on boot using the configs passed through Cloud-Init. Once boot completes, Nginx will be listening and routing traffic to the Next.js target.
