@@ -6,7 +6,6 @@ resource "aws_vpc" "this" {
   tags = {
     Name    = "${var.project_name}-vpc"
     Env     = var.environment
-    project = "portfolio"
   }
 }
 
@@ -19,7 +18,6 @@ resource "aws_subnet" "public" {
   tags = {
     Name    = "${var.project_name}-public-subnet"
     Env     = var.environment
-    project = "portfolio"
   }
 }
 resource "aws_internet_gateway" "igw" {
@@ -28,7 +26,6 @@ resource "aws_internet_gateway" "igw" {
   tags = {
     Name    = "${var.project_name}-igw"
     Env     = var.environment
-    project = "portfolio"
   }
 }
 
@@ -44,7 +41,6 @@ resource "aws_route_table" "public_rt" {
   tags = {
     Name    = "${var.project_name}-public-rt"
     Env     = var.environment
-    project = "portfolio"
   }
 }
 

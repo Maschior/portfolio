@@ -3,7 +3,6 @@ resource "aws_s3_bucket" "terraform_state" {
 
   tags = {
     Name    = "terraform-state"
-    project = "portfolio"
   }
 }
 
@@ -46,6 +45,5 @@ resource "aws_dynamodb_table" "terraform_locks" {
 
   tags = {
     Name    = "terraform-locks"
-    project = "portfolio"
   }
 }

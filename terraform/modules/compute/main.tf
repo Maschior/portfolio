@@ -38,6 +38,5 @@ resource "aws_instance" "this" {
   tags = {
     Name    = "${var.project_name}-instance"
     Env     = var.environment
-    project = "portfolio"
   }
 }
