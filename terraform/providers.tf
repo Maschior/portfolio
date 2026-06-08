@@ -24,12 +24,19 @@ terraform {
 }
 
 provider "aws" {
+  alias  = "no_tags"
+  region = var.aws_region
+}
+
+provider "aws" {
   region = var.aws_region
 
   default_tags {
-    tags = {
+    tags = merge({
       project    = var.project_name
       managed_by = "terraform"
-    }
+      },
+      aws_servicecatalogappregistry_application.project.application_tag
+    )
   }
 }

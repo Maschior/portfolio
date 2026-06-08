@@ -63,3 +63,8 @@ module "compute" {
   environment  = "dev"
 }
 
+resource "aws_servicecatalogappregistry_application" "project" {
+  provider    = aws.no_tags
+  name        = "${var.project_name}-app"
+  description = "Application do projeto ${var.project_name}"
+}
