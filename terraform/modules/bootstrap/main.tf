@@ -2,7 +2,7 @@ resource "aws_s3_bucket" "terraform_state" {
   bucket = "${substr(var.domain_name, 0, length(var.domain_name) - 4)}-terraform-state"
 
   tags = {
-    Name    = "terraform-state"
+    Name = "terraform-state"
   }
 }
 
@@ -44,6 +44,6 @@ resource "aws_dynamodb_table" "terraform_locks" {
   }
 
   tags = {
-    Name    = "terraform-locks"
+    Name = "terraform-locks"
   }
 }

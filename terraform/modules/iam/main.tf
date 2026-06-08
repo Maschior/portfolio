@@ -14,7 +14,7 @@ resource "aws_iam_role" "ec2_role" {
   })
 
   tags = {
-    Name    = "${var.project_name}-ec2-ssm-role"
+    Name = "${var.project_name}-ec2-ssm-role"
   }
 }
 
