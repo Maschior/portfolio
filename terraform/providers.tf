@@ -32,11 +32,10 @@ provider "aws" {
   region = var.aws_region
 
   default_tags {
-    tags = merge({
-      project    = var.project_name
-      managed_by = "terraform"
-      },
-      aws_servicecatalogappregistry_application.project.application_tag
-    )
+    tags = {
+      project        = var.project_name
+      managed_by     = "terraform"
+      awsApplication = aws_servicecatalogappregistry_application.project.application_tag["awsApplication"]
+    }
   }
 }
