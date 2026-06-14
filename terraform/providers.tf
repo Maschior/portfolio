@@ -3,7 +3,7 @@ terraform {
 
   backend "s3" {
     bucket         = "maschior-terraform-state"
-    key            = "state/terraform.tfstate"
+    key            = "state/portfolio-terraform.tfstate"
     region         = "sa-east-1"
     dynamodb_table = "terraform-locks"
     encrypt        = true
