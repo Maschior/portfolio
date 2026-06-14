@@ -80,8 +80,9 @@
               server_name _;
 
               # Servir arquivos estáticos do public/ diretamente pelo Nginx
+              # /var/www/portfolio/app é um symlink criado no deploy
               location ~* ^/(.+\.(?:png|jpg|jpeg|gif|ico|svg|webp|avif|pdf|woff2?|ttf|eot))$ {
-                  root /var/www/portfolio/portfolio-webapp/public;
+                  root /var/www/portfolio/app/public;
                   try_files /$1 @nextjs;
                   expires 30d;
                   add_header Cache-Control "public, immutable";
@@ -89,7 +90,7 @@
 
               # Servir assets do Next.js (_next/static) diretamente
               location /_next/static {
-                  alias /var/www/portfolio/portfolio-webapp/.next/static;
+                  alias /var/www/portfolio/app/.next/static;
                   expires 365d;
                   add_header Cache-Control "public, immutable";
               }
