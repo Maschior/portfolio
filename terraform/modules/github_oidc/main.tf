@@ -33,7 +33,8 @@ resource "aws_iam_role" "github_actions" {
         StringLike = {
           "token.actions.githubusercontent.com:sub" = [
             "repo:Maschior/portfolio:*",
-            "repo:Maschior/portfolio-webapp:*"
+            "repo:Maschior/portfolio-webapp:*",
+            "repo:Maschior/alladin-finance:*"
           ]
         }
       }
